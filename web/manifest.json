@@ -1,11 +1,11 @@
 {
-    "name": "food_diary",
-    "short_name": "food_diary",
+    "name": "Food Diary",
+    "short_name": "Food Diary",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFF8F2",
+    "theme_color": "#8B5A2B",
+    "description": "Catatan makan harian.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "git clone https://github.com/flutter/flutter.git --depth 1 --branch stable .flutter-sdk",
+  "buildCommand": "./.flutter-sdk/bin/flutter config --enable-web && ./.flutter-sdk/bin/flutter pub get && ./.flutter-sdk/bin/flutter build web --release --target=lib/main_web.dart",
+  "outputDirectory": "build/web",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
