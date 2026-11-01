@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'kompres_foto.dart';
+
 /// Buka pilihan kamera/galeri lalu kembalikan bytes foto.
 /// Mengembalikan null kalau dibatalkan.
 Future<({Uint8List bytes, String extension})?> pilihFoto(
@@ -39,5 +41,7 @@ Future<({Uint8List bytes, String extension})?> pilihFoto(
   if (file == null) return null;
   final bytes = await file.readAsBytes();
   final ext = file.name.contains('.') ? file.name.split('.').last : 'jpg';
-  return (bytes: bytes, extension: ext);
+  // Di web image_picker tidak mengecilkan foto, jadi kecilkan di sini.
+  final kecil = await kecilkanFoto(bytes, ext);
+  return (bytes: kecil.bytes, extension: kecil.ext);
 }

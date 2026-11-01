@@ -5,6 +5,7 @@ import '../ai/ai_client.dart';
 import '../models/food_entry.dart';
 import '../state/app_state.dart';
 import '../support/format.dart';
+import '../support/kompres_foto.dart';
 import '../support/pilih_foto.dart';
 import 'widgets/entry_photo.dart';
 
@@ -148,8 +149,10 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
       if (bytes == null || bytes.isEmpty) {
         throw AiError('Belum ada foto untuk dikenali');
       }
-      final hasil =
-          await _ai.kenaliFoto(bytes, mime: _mime(_extBaru ?? _extLama()));
+      // Foto lama (tersimpan sebelum perbaikan) bisa masih besar — kecilkan
+      // lagi supaya tidak ditolak server (HTTP 413).
+      final siap = await kecilkanFoto(bytes, _extBaru ?? _extLama() ?? 'jpg');
+      final hasil = await _ai.kenaliFoto(siap.bytes, mime: _mime(siap.ext));
       if (!mounted) return;
       setState(() {
         _kenali = false;

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:food_diary/ai/ai_client.dart';
+import 'package:food_diary/support/kompres_foto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -70,5 +71,23 @@ void main() {
             .having((e) => e.pesan, 'pesan', contains('Terlalu banyak'))),
       );
     });
+    test('HTTP 413 (foto kelewat besar) jadi pesan ramah', () async {
+      final klien =
+          MockClient((req) async => http.Response('Request Entity Too Large', 413));
+      final ai = AiClient(endpoint: 'http://contoh.test/api/ai', klien: klien);
+      expect(
+        () => ai.kenaliFoto(Uint8List.fromList([1, 2, 3])),
+        throwsA(isA<AiError>()
+            .having((e) => e.pesan, 'pesan', contains('terlalu besar'))),
+      );
+    });
+  });
+
+  test('kecilkanFoto di perangkat: apa adanya (picker sudah mengecilkan)',
+      () async {
+    final bytes = Uint8List.fromList(List.filled(900 * 1024, 7));
+    final hasil = await kecilkanFoto(bytes, 'png');
+    expect(hasil.bytes.length, bytes.length);
+    expect(hasil.ext, 'png');
   });
 }

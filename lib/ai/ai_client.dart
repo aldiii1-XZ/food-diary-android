@@ -101,6 +101,9 @@ class AiClient {
       // balasan bukan JSON; ditangani lewat statusCode di bawah
     }
     if (r.statusCode != 200) {
+      if (r.statusCode == 413) {
+        throw AiError('Fotonya terlalu besar untuk dikirim. Coba foto lain.');
+      }
       throw AiError(
         (data['error'] ?? 'AI membalas HTTP ${r.statusCode}').toString(),
       );
