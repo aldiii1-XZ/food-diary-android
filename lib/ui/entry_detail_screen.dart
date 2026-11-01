@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../ai/ai_client.dart';
 import '../models/food_entry.dart';
 import '../state/app_state.dart';
 import '../support/format.dart';
@@ -49,6 +50,8 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
   Uint8List? _fotoBaru;
   String? _extBaru;
   bool _menyimpan = false;
+  bool _kenali = false;
+  final AiClient _ai = AiClient();
 
   @override
   void initState() {
@@ -59,6 +62,11 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
     _waktu = e?.consumedAt ?? DateTime.now();
     _fotoBaru = widget.photoBytes;
     _extBaru = widget.photoExtension;
+    if (widget.isBaru && _fotoBaru != null) {
+      // Kenali otomatis begitu form terbuka; kalau gagal, diam saja.
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _kenaliFoto(otomatis: true));
+    }
   }
 
   @override
@@ -113,6 +121,52 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Tidak bisa mengambil foto: $e')));
+    }
+  }
+
+  String? _extLama() {
+    final n = widget.entry?.photoFileName;
+    if (n == null || !n.contains('.')) return null;
+    return n.split('.').last;
+  }
+
+  String _mime(String? ext) => switch (ext?.toLowerCase()) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        _ => 'image/jpeg',
+      };
+
+  /// Kirim foto ke AI lalu isi kolom nama (dan catatan bila masih kosong).
+  Future<void> _kenaliFoto({bool otomatis = false}) async {
+    if (_kenali) return;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _kenali = true);
+    try {
+      final bytes = _fotoBaru ?? await bacaBytesFoto(_pathFotoLama);
+      if (bytes == null || bytes.isEmpty) {
+        throw AiError('Belum ada foto untuk dikenali');
+      }
+      final hasil =
+          await _ai.kenaliFoto(bytes, mime: _mime(_extBaru ?? _extLama()));
+      if (!mounted) return;
+      setState(() {
+        _kenali = false;
+        if (hasil.nama.isNotEmpty) _nama.text = hasil.nama;
+        final ringkas = hasil.ringkasan;
+        if (ringkas.isNotEmpty && _catatan.text.trim().isEmpty) {
+          _catatan.text = ringkas;
+        }
+      });
+      if (!otomatis) {
+        messenger.showSnackBar(const SnackBar(content: Text('Foto dikenali')));
+      }
+    } on Exception catch (e) {
+      if (!mounted) return;
+      setState(() => _kenali = false);
+      if (!otomatis) {
+        messenger
+            .showSnackBar(SnackBar(content: Text('Gagal mengenali foto: $e')));
+      }
     }
   }
 
@@ -217,10 +271,31 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
               ),
             Align(
               alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _menyimpan ? null : _gantiFoto,
-                icon: const Icon(Icons.photo_outlined, size: 18),
-                label: Text(adaFoto ? 'Ganti foto' : 'Tambah foto'),
+              child: Wrap(
+                spacing: 4,
+                children: [
+                  TextButton.icon(
+                    onPressed: _menyimpan ? null : _gantiFoto,
+                    icon: const Icon(Icons.photo_outlined, size: 18),
+                    label: Text(adaFoto ? 'Ganti foto' : 'Tambah foto'),
+                  ),
+                  if (adaFoto)
+                    TextButton.icon(
+                      onPressed: (_menyimpan || _kenali)
+                          ? null
+                          : () => _kenaliFoto(),
+                      icon: _kenali
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.search, size: 18),
+                      label: Text(
+                        _kenali ? 'Mengenali...' : 'Kenali dari foto',
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 8),

@@ -53,3 +53,4 @@ app.*.map.json
 
 # SDK Flutter untuk build di server (dipakai vercel.json)
 .flutter-sdk/
+.vercel

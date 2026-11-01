@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../state/app_state.dart';
 import '../support/pilih_foto.dart';
+import 'ai_chat_screen.dart';
 import 'entry_detail_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -47,6 +48,7 @@ class _HomeShellState extends State<HomeShell> {
         child: switch (_tab) {
           0 => TodayScreen(state: widget.state),
           1 => HistoryScreen(state: widget.state),
+          2 => const AiChatScreen(),
           _ => SettingsScreen(state: widget.state),
         },
       ),
@@ -70,6 +72,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.calendar_today_outlined),
             selectedIcon: Icon(Icons.calendar_today),
             label: 'Riwayat',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Asisten',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

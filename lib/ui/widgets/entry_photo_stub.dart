@@ -49,3 +49,15 @@ class EntryPhoto extends StatelessWidget {
     );
   }
 }
+
+/// Web: foto disimpan sebagai data URL base64; kembalikan isi bytesnya.
+Future<Uint8List?> bacaBytesFoto(String? path) async {
+  if (path == null || !path.startsWith('data:')) return null;
+  final koma = path.indexOf(',');
+  if (koma < 0) return null;
+  try {
+    return base64Decode(path.substring(koma + 1));
+  } on FormatException {
+    return null;
+  }
+}

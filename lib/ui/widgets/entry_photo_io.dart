@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -35,4 +36,12 @@ class EntryPhoto extends StatelessWidget {
       child: SizedBox(width: width, height: height, child: child),
     );
   }
+}
+
+/// Baca bytes foto dari path file (dipakai fitur kenali dari foto).
+Future<Uint8List?> bacaBytesFoto(String? path) async {
+  if (path == null || path.isEmpty) return null;
+  final file = File(path);
+  if (!await file.exists()) return null;
+  return file.readAsBytes();
 }
