@@ -18,6 +18,9 @@ class FileEntryStore implements EntryStore {
   File get _file => File(p.join(rootDir.path, 'entries.json'));
   Directory get _photosDir => Directory(p.join(rootDir.path, 'photos'));
 
+  /// Setelan kecil non-catatan (mis. batas kalori).
+  File get _setelan => File(p.join(rootDir.path, 'setelan.json'));
+
   @override
   Future<List<FoodEntry>> load() async {
     if (!await _file.exists()) return [];
@@ -72,5 +75,27 @@ class FileEntryStore implements EntryStore {
   Future<void> deletePhoto(String fileName) async {
     final file = File(photoPath(fileName));
     if (await file.exists()) await file.delete();
+  }
+
+  @override
+  Future<int?> loadBatasKalori() async {
+    if (!await _setelan.exists()) return null;
+    try {
+      final data =
+          jsonDecode(await _setelan.readAsString()) as Map<String, dynamic>;
+      final v = (data['batasKalori'] as num?)?.toInt();
+      return (v != null && v > 0) ? v : null;
+    } on Exception {
+      // Setelan rusak: anggap belum diatur. Jangan timpa (biar bisa dicek).
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveBatasKalori(int? batas) async {
+    await rootDir.create(recursive: true);
+    final tmp = File('${_setelan.path}.tmp');
+    await tmp.writeAsString(jsonEncode({'batasKalori': batas}), flush: true);
+    await tmp.rename(_setelan.path);
   }
 }

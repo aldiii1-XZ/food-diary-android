@@ -28,6 +28,22 @@ void main() {
 
     expect(e.name, '');
     expect(e.note, '');
+    expect(e.kcal, isNull);
     expect(e.photoFileName, isNull);
+  });
+
+  test('kcal bolak-balik; JSON lama tanpa kcal tetap aman', () {
+    final awal = FoodEntry(
+      id: '3',
+      name: 'Nasi goreng',
+      note: '',
+      kcal: 650,
+      consumedAt: DateTime(2026, 11, 1, 12),
+    );
+    expect(FoodEntry.fromJson(awal.toJson()).kcal, 650);
+
+    final lama = FoodEntry.fromJson(
+        {'id': '4', 'consumedAt': '2026-11-01T07:30:00.000'});
+    expect(lama.kcal, isNull);
   });
 }

@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../ai/ai_client.dart';
 import '../models/food_entry.dart';
@@ -46,6 +45,7 @@ class EntryDetailScreen extends StatefulWidget {
 class _EntryDetailScreenState extends State<EntryDetailScreen> {
   late final TextEditingController _nama;
   late final TextEditingController _catatan;
+  late final TextEditingController _kalori;
   late DateTime _waktu;
   Uint8List? _fotoBaru;
   String? _extBaru;
@@ -59,6 +59,7 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
     final e = widget.entry;
     _nama = TextEditingController(text: e?.name ?? '');
     _catatan = TextEditingController(text: e?.note ?? '');
+    _kalori = TextEditingController(text: e?.kcal?.toString() ?? '');
     _waktu = e?.consumedAt ?? DateTime.now();
     _fotoBaru = widget.photoBytes;
     _extBaru = widget.photoExtension;
@@ -73,6 +74,7 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
   void dispose() {
     _nama.dispose();
     _catatan.dispose();
+    _kalori.dispose();
     super.dispose();
   }
 
@@ -152,6 +154,10 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
       setState(() {
         _kenali = false;
         if (hasil.nama.isNotEmpty) _nama.text = hasil.nama;
+        final angkaKalori = hasil.kalori.replaceAll(RegExp(r'[^0-9]'), '');
+        if (angkaKalori.isNotEmpty && _kalori.text.trim().isEmpty) {
+          _kalori.text = angkaKalori;
+        }
         final ringkas = hasil.ringkasan;
         if (ringkas.isNotEmpty && _catatan.text.trim().isEmpty) {
           _catatan.text = ringkas;
@@ -175,6 +181,7 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
     setState(() => _menyimpan = true);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final kcal = int.tryParse(_kalori.text.trim());
     try {
       if (widget.isBaru) {
         final bytes = _fotoBaru;
@@ -184,6 +191,7 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
           photoExtension: _extBaru ?? 'jpg',
           name: _nama.text,
           note: _catatan.text,
+          kcal: kcal,
           consumedAt: _waktu,
         );
       } else {
@@ -191,6 +199,8 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
           widget.entry!.id,
           name: _nama.text,
           note: _catatan.text,
+          newKcal: kcal,
+          gantiKcal: true,
           consumedAt: _waktu,
           newPhotoBytes: _fotoBaru == widget.photoBytes ? null : _fotoBaru,
           newPhotoExtension: _extBaru,
@@ -316,6 +326,17 @@ class _EntryDetailScreenState extends State<EntryDetailScreen> {
               decoration: const InputDecoration(
                 labelText: 'Catatan (opsional)',
                 hintText: 'mis. porsi, tempat, perasaan',
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _kalori,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Kalori (kkal, opsional)',
+                hintText: 'mis. 650',
+                helperText: 'Terisi sendiri saat kenali foto.',
               ),
             ),
             const SizedBox(height: 14),

@@ -15,4 +15,9 @@ abstract class EntryStore {
 
   /// Path lengkap file foto supaya bisa ditampilkan; versi memori mengembalikan ''.
   String photoPath(String fileName);
+
+  /// Batas kalori harian; null = belum diatur.
+  Future<int?> loadBatasKalori();
+
+  Future<void> saveBatasKalori(int? batas);
 }

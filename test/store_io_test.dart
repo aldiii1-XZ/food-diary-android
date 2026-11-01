@@ -71,4 +71,25 @@ void main() {
     final nama = await store.addPhoto([0], 'php/*');
     expect(nama.endsWith('.jpg'), isTrue);
   });
+
+  test('batas kalori: belum ada, tersimpan, lalu dihapus', () async {
+    expect(await store.loadBatasKalori(), isNull);
+
+    await store.saveBatasKalori(1800);
+    expect(await store.loadBatasKalori(), 1800);
+
+    // "restart": instance baru membaca folder yang sama
+    final storeBaru = FileEntryStore(Directory('${tmp.path}/data'));
+    expect(await storeBaru.loadBatasKalori(), 1800);
+
+    await store.saveBatasKalori(null);
+    expect(await store.loadBatasKalori(), isNull);
+  });
+
+  test('setelan rusak tidak bikin gagal', () async {
+    final dataDir = Directory('${tmp.path}/data');
+    await dataDir.create(recursive: true);
+    await File('${dataDir.path}/setelan.json').writeAsString('{rusak');
+    expect(await store.loadBatasKalori(), isNull);
+  });
 }

@@ -39,3 +39,14 @@ String rentangJam(List<DateTime> times) {
   if (urut.length == 1) return formatJam(urut.first);
   return '${formatJam(urut.first)}–${formatJam(urut.last)}';
 }
+
+/// "2.000" — pemisah ribuan gaya Indonesia, tanpa paket tambahan.
+String formatRibuan(int n) {
+  final s = n.abs().toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write('.');
+    buf.write(s[i]);
+  }
+  return (n < 0 ? '-' : '') + buf.toString();
+}

@@ -5,6 +5,7 @@ import '../support/format.dart';
 import 'entry_detail_screen.dart';
 import 'widgets/empty_state.dart';
 import 'widgets/entry_tile.dart';
+import 'widgets/kartu_kalori.dart';
 
 /// Judul halaman + satu baris keterangan.
 class ScreenHeader extends StatelessWidget {
@@ -71,6 +72,7 @@ class TodayScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ScreenHeader(title: 'Hari Ini', subtitle: keterangan),
+            KartuKalori(state: state),
             Expanded(
               child: entries.isEmpty
                   ? const EmptyState(

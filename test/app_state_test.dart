@@ -100,4 +100,57 @@ void main() {
 
     expect(stateGagal.entries, isEmpty);
   });
+
+  test('kalori harian: total hanya dari catatan hari ini', () async {
+    final sekarang = DateTime.now();
+    await state.createEntry(
+      photoBytes: [9, 9],
+      photoExtension: 'jpg',
+      name: 'Nasi goreng',
+      note: '',
+      kcal: 650,
+      consumedAt: sekarang,
+    );
+    await state.createEntry(
+      photoBytes: [9, 9],
+      photoExtension: 'jpg',
+      name: 'Minggu lalu',
+      note: '100 kkal',
+      consumedAt: sekarang.subtract(const Duration(days: 7)),
+    );
+
+    expect(state.ringkasanHariIni.total, 650);
+    expect(state.ringkasanHariIni.terhitung, 1);
+  });
+
+  test('ubah catatan: kalori bisa diisi lalu dihapus', () async {
+    await catat(state, 'Kopi susu', DateTime.now());
+    final id = state.entries.first.id;
+
+    await state.updateEntry(id, newKcal: 90, gantiKcal: true);
+    expect(state.entries.first.kcal, 90);
+
+    await state.updateEntry(id, newKcal: null, gantiKcal: true);
+    expect(state.entries.first.kcal, isNull);
+
+    // tanpa gantiKcal, kalori yang ada tidak ikut terhapus
+    await state.updateEntry(id, newKcal: 90, gantiKcal: true);
+    await state.updateEntry(id, name: 'Kopi');
+    expect(state.entries.first.kcal, 90);
+  });
+
+  test('batas kalori tersimpan dan terbaca lagi setelah app dibuka ulang',
+      () async {
+    await state.simpanBatasKalori(2000);
+    expect(state.ringkasanHariIni.adaBatas, isTrue);
+
+    final lagi = AppState(FileEntryStore(Directory('${tmp.path}/data')));
+    await lagi.init();
+    expect(lagi.batasKalori, 2000);
+
+    await lagi.simpanBatasKalori(null);
+    final ketiga = AppState(FileEntryStore(Directory('${tmp.path}/data')));
+    await ketiga.init();
+    expect(ketiga.batasKalori, isNull);
+  });
 }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/food_entry.dart';
 import '../storage/store_base.dart';
 import '../support/format.dart';
+import '../support/kalori.dart';
 
 /// State global aplikasi: daftar catatan + operasi simpan/ubah/hapus.
 ///
@@ -18,10 +19,18 @@ class AppState extends ChangeNotifier {
   List<FoodEntry> _entries = [];
   bool _loading = true;
   String? _loadError;
+  int? _batasKalori;
 
   List<FoodEntry> get entries => List.unmodifiable(_entries);
   bool get isLoading => _loading;
   String? get loadError => _loadError;
+
+  /// Batas kalori harian; null = belum diatur.
+  int? get batasKalori => _batasKalori;
+
+  /// Ringkasan kalori hari ini: total catatan hari ini + batas.
+  RingkasanKalori get ringkasanHariIni =>
+      ringkasKalori(todayEntries, batas: _batasKalori);
 
   List<FoodEntry> get todayEntries => entriesOn(DateTime.now());
 
@@ -37,10 +46,15 @@ class AppState extends ChangeNotifier {
       _sorted();
     } catch (e) {
       _loadError = 'Catatan tidak bisa dibuka: $e';
-    } finally {
-      _loading = false;
-      notifyListeners();
     }
+    try {
+      _batasKalori = await store.loadBatasKalori();
+    } catch (_) {
+      // Batas rusak/tidak terbaca bukan alasan gagal membuka catatan.
+      _batasKalori = null;
+    }
+    _loading = false;
+    notifyListeners();
   }
 
   Future<void> createEntry({
@@ -48,6 +62,7 @@ class AppState extends ChangeNotifier {
     required String photoExtension,
     required String name,
     required String note,
+    int? kcal,
     required DateTime consumedAt,
   }) async {
     final photoFileName = await store.addPhoto(photoBytes, photoExtension);
@@ -55,6 +70,7 @@ class AppState extends ChangeNotifier {
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       name: name.trim(),
       note: note.trim(),
+      kcal: _bersihKcal(kcal),
       consumedAt: consumedAt,
       photoFileName: photoFileName,
     );
@@ -75,6 +91,8 @@ class AppState extends ChangeNotifier {
     String id, {
     String? name,
     String? note,
+    int? newKcal,
+    bool gantiKcal = false,
     DateTime? consumedAt,
     List<int>? newPhotoBytes,
     String? newPhotoExtension,
@@ -84,6 +102,7 @@ class AppState extends ChangeNotifier {
     final entry = _entries[index];
     final oldName = entry.name;
     final oldNote = entry.note;
+    final oldKcal = entry.kcal;
     final oldAt = entry.consumedAt;
     final oldPhoto = entry.photoFileName;
 
@@ -95,6 +114,9 @@ class AppState extends ChangeNotifier {
     }
     if (name != null) entry.name = name.trim();
     if (note != null) entry.note = note.trim();
+    // gantiKcal dipisah dari newKcal supaya "hapus kalori" (null) bisa
+    // dibedakan dari "biarkan apa adanya".
+    if (gantiKcal) entry.kcal = _bersihKcal(newKcal);
     if (consumedAt != null) entry.consumedAt = consumedAt;
     _sorted();
     try {
@@ -103,6 +125,7 @@ class AppState extends ChangeNotifier {
       entry
         ..name = oldName
         ..note = oldNote
+        ..kcal = oldKcal
         ..consumedAt = oldAt
         ..photoFileName = oldPhoto;
       if (addedPhoto != null) await _deletePhotoQuietly(addedPhoto);
@@ -132,6 +155,16 @@ class AppState extends ChangeNotifier {
     final photo = removed.photoFileName;
     if (photo != null) await _deletePhotoQuietly(photo);
   }
+
+  /// Simpan batas kalori harian; null atau <= 0 berarti hapus batas.
+  Future<void> simpanBatasKalori(int? batas) async {
+    final bersih = (batas == null || batas <= 0) ? null : batas;
+    await store.saveBatasKalori(bersih);
+    _batasKalori = bersih;
+    notifyListeners();
+  }
+
+  static int? _bersihKcal(int? v) => (v == null || v <= 0) ? null : v;
 
   void _sorted() =>
       _entries.sort((a, b) => b.consumedAt.compareTo(a.consumedAt));

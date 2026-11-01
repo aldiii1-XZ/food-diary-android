@@ -16,6 +16,7 @@ import 'store_base.dart';
 /// perangkat (itu butuh server).
 class WebEntryStore implements EntryStore {
   static const _kunciCatatan = 'food_diary.entries';
+  static const _kunciBatas = 'food_diary.batasKalori';
   static const _namaDb = 'food_diary';
   static const _tabelFoto = 'photos';
 
@@ -136,6 +137,22 @@ class WebEntryStore implements EntryStore {
     final tx = db.transaction(_tabelFoto.toJS, 'readwrite');
     tx.objectStore(_tabelFoto).delete(fileName.toJS);
     await _tungguTx(tx);
+  }
+
+  @override
+  Future<int?> loadBatasKalori() async {
+    final s = web.window.localStorage.getItem(_kunciBatas);
+    final v = s == null ? null : int.tryParse(s);
+    return (v != null && v > 0) ? v : null;
+  }
+
+  @override
+  Future<void> saveBatasKalori(int? batas) async {
+    if (batas == null || batas <= 0) {
+      web.window.localStorage.removeItem(_kunciBatas);
+    } else {
+      web.window.localStorage.setItem(_kunciBatas, '$batas');
+    }
   }
 
   String _mime(String nama) {

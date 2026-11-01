@@ -10,6 +10,7 @@ class MemoryEntryStore implements EntryStore {
 
   final List<FoodEntry> _entries;
   int _fotoKe = 0;
+  int? _batas;
 
   @override
   Future<List<FoodEntry>> load() async => [..._entries];
@@ -30,4 +31,10 @@ class MemoryEntryStore implements EntryStore {
 
   @override
   String photoPath(String fileName) => '';
+
+  @override
+  Future<int?> loadBatasKalori() async => _batas;
+
+  @override
+  Future<void> saveBatasKalori(int? batas) async => _batas = batas;
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/food_entry.dart';
 import '../../state/app_state.dart';
 import '../../support/format.dart';
+import '../../support/kalori.dart';
 import 'entry_photo.dart';
 
 /// Satu baris catatan di daftar.
@@ -30,6 +31,7 @@ class EntryTile extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final judul = entry.name.isEmpty ? 'Tanpa nama' : entry.name;
+    final kcal = kaloriCatatan(entry);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -63,12 +65,23 @@ class EntryTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              formatJam(entry.consumedAt),
-              style: theme.textTheme.labelLarge
-                  ?.copyWith(color: scheme.onSurfaceVariant),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (kcal != null)
+                  Text(
+                    '${formatRibuan(kcal)} kkal',
+                    style: theme.textTheme.labelMedium
+                        ?.copyWith(color: scheme.primary),
+                  ),
+                Text(
+                  formatJam(entry.consumedAt),
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 2),
             Icon(Icons.chevron_right, size: 20, color: scheme.outline),
           ],
         ),
